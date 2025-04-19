@@ -11,7 +11,7 @@ mkdir -p $INSTALL_DIR
 read -p "请输入 Cloudflare API Token: " api_token
 read -p "请输入 Cloudflare ZONE ID: " zone_id
 read -p "请输入 Cloudflare RULE ID: " rule_id
-read -p "请输入 允许访问的主域名（例如：cjpnz.581404.xyz）: " rule_name
+read -p "请输入 允许访问的主域名（例如：sese.laosepie.com）: " rule_name
 read -p "请输入需要同步的域名列表 (用空格隔开): " domain_input
 
 # 自动写入 JSON 配置文件
