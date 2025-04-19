@@ -8,7 +8,7 @@ import time
 import json
 
 # === 配置文件路径 ===
-CONFIG_FILE = "/root/cf_Rules/cf_config.py"
+CONFIG_FILE = "/root/cf_Rules/cf_config.json"
 
 # === 默认配置模板 ===
 def create_default_config():
