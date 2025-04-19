@@ -2,9 +2,6 @@
 # /root/cf_Rules/cf_manager.py
 
 import os
-import sys
-import subprocess
-import time
 import json
 
 # === 配置文件路径 ===
@@ -18,8 +15,6 @@ def create_default_config():
         "RULE_NAME": "",
         "DOMAIN_NAMES": []
     }
-
-
 
 def load_config():
     if not os.path.exists(CONFIG_FILE):
@@ -36,7 +31,6 @@ def edit_config():
     config = load_config()
     print("当前配置:")
     print(json.dumps(config, indent=4))
-
     config['CF_API_TOKEN'] = input("请输入新的CF_API_TOKEN: ").strip()
     config['ZONE_ID'] = input("请输入新的ZONE_ID: ").strip()
     config['RULE_NAME'] = input("请输入新的WAF规则名称: ").strip()
@@ -66,34 +60,35 @@ def remove_domain():
 def uninstall():
     confirm = input("确认要卸载所有脚本和依赖吗？(yes/no): ").lower()
     if confirm == 'yes':
-        os.system("systemctl stop cf_waf_sync.service")
-        os.system("systemctl disable cf_waf_sync.service")
-        os.system("rm -f /etc/systemd/system/cf_waf_sync.service")
+        # 删除crontab同步任务
+        os.system("crontab -l | grep -v '/root/cf_Rules/cf_sync.py' | crontab -")
+        # 删除整个脚本目录
         os.system("rm -rf /root/cf_Rules")
+        # 卸载requests库
         os.system("pip3 uninstall -y requests")
-        print("卸载完成。")
+        print("✅ 卸载完成，系统已清理干净。")
     else:
         print("取消卸载。")
 
 def setup_cron():
-    os.system('(crontab -l ; echo "*/5 * * * * python3 /root/cf_Rules/cf_sync.py") | sort - | uniq | crontab -')
-    print("定时任务已添加，每5分钟执行一次。")
+    os.system('(crontab -l 2>/dev/null; echo "*/5 * * * * python3 /root/cf_Rules/cf_sync.py") | sort - | uniq | crontab -')
+    print("✅ 定时任务已添加，每5分钟执行一次。")
 
 def remove_cron():
     os.system("crontab -l | grep -v '/root/cf_Rules/cf_sync.py' | crontab -")
-    print("定时任务已删除。")
+    print("✅ 定时任务已删除。")
 
 def manual_run():
     os.system("python3 /root/cf_Rules/cf_sync.py")
 
 def stop_run():
-    os.system("systemctl stop cf_waf_sync.service")
-    print("服务已停止。")
+    os.system("crontab -l | grep -v '/root/cf_Rules/cf_sync.py' | crontab -")
+    print("✅ 已停止定时同步任务。")
 
 # === 主菜单 ===
 def menu():
     while True:
-        print("""
+        print(\"\"\" 
 Cloudflare WAF自动同步 - 管理脚本
 1) 修改API和配置信息
 2) 添加同步域名
@@ -101,10 +96,10 @@ Cloudflare WAF自动同步 - 管理脚本
 4) 安装定时任务
 5) 删除定时任务
 6) 手动执行同步
-7) 停止同步服务
+7) 停止同步任务
 8) 卸载全部文件
 9) 退出
-        """)
+        \"\"\")
         choice = input("请输入选项: ").strip()
 
         if choice == '1':
