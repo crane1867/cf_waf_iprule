@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# /root/cf_Rules/cf_waf_manager.py
+# /root/cf_Rules/cf_manager.py
 
 import os
 import sys
@@ -8,7 +8,7 @@ import time
 import json
 
 # === 配置文件路径 ===
-CONFIG_FILE = "/root/cf_Rules/config.json"
+CONFIG_FILE = "/root/cf_Rules/cf_config.py"
 
 # === 默认配置模板 ===
 def create_default_config():
