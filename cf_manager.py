@@ -14,11 +14,12 @@ CONFIG_FILE = "/root/cf_Rules/cf_config.json"
 def create_default_config():
     return {
         "CF_API_TOKEN": "",
-        "ACCOUNT_ID": "",
-        "RULESET_ID": "",
+        "ZONE_ID": "",
         "RULE_NAME": "",
         "DOMAIN_NAMES": []
     }
+
+
 
 def load_config():
     if not os.path.exists(CONFIG_FILE):
@@ -37,8 +38,7 @@ def edit_config():
     print(json.dumps(config, indent=4))
 
     config['CF_API_TOKEN'] = input("请输入新的CF_API_TOKEN: ").strip()
-    config['ACCOUNT_ID'] = input("请输入新的ACCOUNT_ID: ").strip()
-    config['RULESET_ID'] = input("请输入新的RULESET_ID: ").strip()
+    config['ZONE_ID'] = input("请输入新的ZONE_ID: ").strip()
     config['RULE_NAME'] = input("请输入新的WAF规则名称: ").strip()
     save_config(config)
     print("配置已保存。")
