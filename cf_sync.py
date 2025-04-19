@@ -91,6 +91,9 @@ def update_existing_rule(ipv4_list, ipv6_list, config, filter_id):
     final_condition = " or ".join(combined_condition)
     expression = f'(http.host eq "{config["RULE_NAME"]}" and not ({final_condition}))'
 
+    # === 添加调试日志 ===
+    log(f"DEBUG - 生成的表达式: {expression}")
+
     # 更新 filter 内容
     update_filter_url = f"https://api.cloudflare.com/client/v4/zones/{config['ZONE_ID']}/filters/{filter_id}"
     filter_body = {
@@ -134,8 +137,7 @@ def main():
         update_existing_rule(ipv4, ipv6, config, filter_id)  # 传递分离的列表
     else:
         log("❌ 无法获取filter.id，规则未更新。")
-        
-    log(f"DEBUG - 生成的表达式: {expression}")        
+           
 
 if __name__ == '__main__':
     main()
