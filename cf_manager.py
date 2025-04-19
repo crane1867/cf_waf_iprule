@@ -12,6 +12,7 @@ def create_default_config():
     return {
         "CF_API_TOKEN": "",
         "ZONE_ID": "",
+        "RULE_ID": "",        
         "RULE_NAME": "",
         "DOMAIN_NAMES": []
     }
@@ -33,7 +34,8 @@ def edit_config():
     print(json.dumps(config, indent=4))
     config['CF_API_TOKEN'] = input("请输入新的CF_API_TOKEN: ").strip()
     config['ZONE_ID'] = input("请输入新的ZONE_ID: ").strip()
-    config['RULE_NAME'] = input("请输入新的WAF规则名称: ").strip()
+    config['RULE_ID'] = input("请输入新的RULE_ID: ").strip()    
+    config['RULE_NAME'] = input("请输入新的允许访问的域名: ").strip()
     save_config(config)
     print("配置已保存。")
 
