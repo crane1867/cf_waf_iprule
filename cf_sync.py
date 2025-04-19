@@ -64,24 +64,29 @@ def get_filter_id(config):
     return None
 
 def update_existing_rule(ipv4_list, ipv6_list, config, filter_id):
+    headers = {
+        "Authorization": f"Bearer {config['CF_API_TOKEN']}",
+        "Content-Type": "application/json"
+    }
+
     # 构建 IPv4 条件
     ipv4_condition = ""
     if ipv4_list:
         ipv4_str = ", ".join(ipv4_list)
-        ipv4_condition = f"ip.src in {{{ipv4_str}}}"
+        ipv4_condition = f"ip.src in {{{ipv4_str}}}"  # 示例: ip.src in {1.1.1.1, 2.2.2.2}
 
-    # 构建 IPv6 条件（每个地址单独匹配）
+    # 构建 IPv6 条件（每个地址用引号包裹）
     ipv6_conditions = []
     for ip in ipv6_list:
-        ipv6_conditions.append(f"ip.src eq {ip}")
+        ipv6_conditions.append(f'ip.src eq "{ip}"')  # 双引号包裹 IPv6
     ipv6_condition = " or ".join(ipv6_conditions)
 
-    # 合并所有条件
+    # 合并所有条件（每个子条件加括号）
     combined_condition = []
     if ipv4_condition:
-        combined_condition.append(ipv4_condition)
-    if ipv6_conditions:
-        combined_condition.append(f"({ipv6_condition})")  # 避免运算符优先级问题
+        combined_condition.append(f"({ipv4_condition})")  # 包裹括号
+    if ipv6_condition:
+        combined_condition.append(f"({ipv6_condition})")  # 包裹括号
 
     final_condition = " or ".join(combined_condition)
     expression = f'(http.host eq "{config["RULE_NAME"]}" and not ({final_condition}))'
@@ -92,7 +97,7 @@ def update_existing_rule(ipv4_list, ipv6_list, config, filter_id):
         "id": filter_id,
         "expression": expression,
         "paused": False,
-        "description": f"同步更新：允许解析IP访问 {config['RULE_NAME']}，其余拦截"
+        "description": f"同步更新：允许解析IP访问 {config['RULE_NAME']}，其余拦截",
         "ref": "auto-sync-script"
     }
 
@@ -102,7 +107,16 @@ def update_existing_rule(ipv4_list, ipv6_list, config, filter_id):
             log(f"❌ 更新filter表达式失败: {f_response.text}")
             return
 
-        r_response = requests.put(api_url, headers=headers, json=rule_data)
+         # === 更新 Rule ===
+        rule_data = {
+            "filter": {"id": filter_id},
+            "action": "block",
+            "description": f"自动同步更新规则：{config['RULE_NAME']}"
+        }
+        # 正确定义 Rule 更新 URL
+        rule_url = f"https://api.cloudflare.com/client/v4/zones/{config['ZONE_ID']}/firewall/rules/{config['RULE_ID']}"
+        r_response = requests.put(rule_url, headers=headers, json=rule_data)
+        
         if r_response.ok:
             log("✅ Cloudflare规则已成功更新！")
         else:
@@ -120,6 +134,8 @@ def main():
         update_existing_rule(ipv4, ipv6, config, filter_id)  # 传递分离的列表
     else:
         log("❌ 无法获取filter.id，规则未更新。")
+        
+    log(f"DEBUG - 生成的表达式: {expression}")        
 
 if __name__ == '__main__':
     main()
