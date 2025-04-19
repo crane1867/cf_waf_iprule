@@ -55,4 +55,9 @@ if ! crontab -l 2>/dev/null | grep -q 'cf_sync.py'; then
     echo "✅ 定时任务已添加，5分钟自动同步一次。"
 fi
 
+# 创建日志文件
+touch $INSTALL_DIR/sync.log
+echo "📝 日志文件已创建：$INSTALL_DIR/sync.log"
+
+
 echo "🎉 安装完成！直接输入 cf 即可管理，或等待系统每5分钟自动同步！"
