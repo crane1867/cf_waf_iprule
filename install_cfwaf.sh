@@ -37,6 +37,7 @@ pip3 install requests --break-system-packages
 # 下载核心脚本（从你的GitHub替换链接）
 wget -O $INSTALL_DIR/cf_sync.py https://raw.githubusercontent.com/crane1867/cf_waf_iprule/main/cf_sync.py
 wget -O $INSTALL_DIR/cf_manager.py https://raw.githubusercontent.com//crane1867/cf_waf_iprule/main/cf_manager.py
+wget -O $INSTALL_DIR/sync.log https://raw.githubusercontent.com//crane1867/cf_waf_iprule/main/sync.log
 
 chmod +x $INSTALL_DIR/*.py
 
