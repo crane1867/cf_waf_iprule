@@ -8,7 +8,7 @@ import json
 import os
 import datetime
 
-CONFIG_FILE = "/root/cf_Rules/config.json"
+CONFIG_FILE = "/root/cf_Rules/cf_config.py"
 LOG_FILE = "/root/cf_Rules/sync.log"
 
 # === 日志 ===
