@@ -25,18 +25,19 @@ def load_config():
         return json.load(f)
 
 def resolve_ips(domains):
-    ipv4, ipv6 = set(), set()
+    ipv4 = set()
+    ipv6 = set()
     for domain in domains:
         try:
             for info in socket.getaddrinfo(domain, None):
                 ip = info[4][0]
-                if ':' in ip:  # IPv6
-                    ipv6.add(ip)  # 保留原始IPv6，不转/64
+                if ':' in ip:
+                    ipv6.add(ip)  # 保留原始 IPv6 地址
                 else:
                     ipv4.add(ip)
         except Exception as e:
             log(f"解析 {domain} 出错: {e}")
-    return list(ipv4 | ipv6)
+    return list(ipv4), list(ipv6)  # 返回分离的列表
 
 def get_filter_id(config):
     api_url = f"https://api.cloudflare.com/client/v4/zones/{config['ZONE_ID']}/firewall/rules/{config['RULE_ID']}"
@@ -62,23 +63,28 @@ def get_filter_id(config):
         log(f"⚠️ 获取filter.id时异常: {e}")
     return None
 
-def update_existing_rule(ips, config, filter_id):
-    api_url = f"https://api.cloudflare.com/client/v4/zones/{config['ZONE_ID']}/firewall/rules/{config['RULE_ID']}"
-    headers = {
-        "Authorization": f"Bearer {config['CF_API_TOKEN']}",
-        "Content-Type": "application/json"
-    }
+def update_existing_rule(ipv4_list, ipv6_list, config, filter_id):
+    # 构建 IPv4 条件
+    ipv4_condition = ""
+    if ipv4_list:
+        ipv4_str = ", ".join(ipv4_list)
+        ipv4_condition = f"ip.src in {{{ipv4_str}}}"
 
-    # 自动构建表达式
-    expression = f'(http.host eq \"{config["RULE_NAME"]}\" and not ip.src in {{{", ".join(ips)}}})'
+    # 构建 IPv6 条件（每个地址单独匹配）
+    ipv6_conditions = []
+    for ip in ipv6_list:
+        ipv6_conditions.append(f"ip.src eq {ip}")
+    ipv6_condition = " or ".join(ipv6_conditions)
 
-    rule_data = {
-        "filter": {
-            "id": filter_id
-        },
-        "action": "block",
-        "description": f"自动同步更新规则：{config['RULE_NAME']}"
-    }
+    # 合并所有条件
+    combined_condition = []
+    if ipv4_condition:
+        combined_condition.append(ipv4_condition)
+    if ipv6_conditions:
+        combined_condition.append(f"({ipv6_condition})")  # 避免运算符优先级问题
+
+    final_condition = " or ".join(combined_condition)
+    expression = f'(http.host eq "{config["RULE_NAME"]}" and not ({final_condition}))'
 
     # 更新 filter 内容
     update_filter_url = f"https://api.cloudflare.com/client/v4/zones/{config['ZONE_ID']}/filters/{filter_id}"
@@ -87,6 +93,7 @@ def update_existing_rule(ips, config, filter_id):
         "expression": expression,
         "paused": False,
         "description": f"同步更新：允许解析IP访问 {config['RULE_NAME']}，其余拦截"
+        "ref": "auto-sync-script"
     }
 
     try:
@@ -105,12 +112,12 @@ def update_existing_rule(ips, config, filter_id):
 
 def main():
     config = load_config()
-    ips = resolve_ips(config['DOMAIN_NAMES'])
-    log(f"解析完成：共 {len(ips)} 个IP：{ips}")
+    ipv4, ipv6 = resolve_ips(config['DOMAIN_NAMES'])  # 获取分离的列表
+    log(f"解析完成：IPv4 {len(ipv4)} 个，IPv6 {len(ipv6)} 个")
 
     filter_id = get_filter_id(config)
     if filter_id:
-        update_existing_rule(ips, config, filter_id)
+        update_existing_rule(ipv4, ipv6, config, filter_id)  # 传递分离的列表
     else:
         log("❌ 无法获取filter.id，规则未更新。")
 
