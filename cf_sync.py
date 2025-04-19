@@ -42,38 +42,44 @@ def resolve_ips(domains):
             log(f"解析 {domain} 出错: {e}")
     return list(ipv4 | ipv6)
 
-def update_custom_rule(ips, config):
-    api_url = f"https://api.cloudflare.com/client/v4/zones/{config['ZONE_ID']}/firewall/rules"
+def update_existing_rule(ips, config):
+    zone_id = config['ZONE_ID']
+    rule_id = config['RULE_ID']
 
+    if not rule_id:
+        log("❌ 配置文件缺少 RULE_ID，无法更新，请先通过cf_manager.py设置。")
+        return
+
+    api_url = f"https://api.cloudflare.com/client/v4/zones/{zone_id}/firewall/rules/{rule_id}"
     headers = {
         "Authorization": f"Bearer {config['CF_API_TOKEN']}",
         "Content-Type": "application/json"
     }
 
-    rule = {
+    rule_data = {
         "filter": {
-            "expression": f'(http.host eq "{config["RULE_NAME"]}" and not ip.src in {{{", ".join(ips)}}})',
+            "expression": f'(http.host eq \"{config["RULE_NAME"]}\" and not ip.src in {{{", ".join(ips)}}})',
             "paused": False,
-            "description": "自动同步域名解析IP，拦截其他IP"
+            "description": "自动同步更新：允许解析IP访问，其余拦截"
         },
         "action": "block",
-        "description": f"自动同步更新规则（{config['RULE_NAME']}）"
+        "description": f"自动同步更新规则：{config['RULE_NAME']}"
     }
 
     try:
-        response = requests.put(api_url, headers=headers, json=[rule])
+        response = requests.put(api_url, headers=headers, json=rule_data)
         if response.ok:
-            log("✅ Cloudflare 自定义规则更新成功。")
+            log("✅ Cloudflare WAF规则已成功更新。")
         else:
             log(f"❌ Cloudflare更新失败: {response.text}")
     except Exception as e:
-        log(f"⚠️ API请求失败: {e}")
+        log(f"⚠️ 请求异常: {e}")
 
 def main():
     config = load_config()
     ips = resolve_ips(config['DOMAIN_NAMES'])
     log(f"解析完成：共 {len(ips)} 个IP：{ips}")
-    update_custom_rule(ips, config)
+    update_existing_rule(ips, config)
 
 if __name__ == '__main__':
     main()
