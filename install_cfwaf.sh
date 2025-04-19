@@ -6,10 +6,11 @@ echo "💡 本程序将自动安装依赖、配置API信息、设置定时任务
 # 确保目标路径存在
 INSTALL_DIR="/root/cf_Rules"
 mkdir -p $INSTALL_DIR
-
+"RULE_ID": ""
 # 提示用户输入配置信息
 read -p "请输入 Cloudflare API Token: " api_token
 read -p "请输入 Cloudflare ZONE ID: " zone_id
+read -p "请输入 Cloudflare RULE ID: " rule_id
 read -p "请输入 允许访问的主域名（例如：cjpnz.581404.xyz）: " rule_name
 read -p "请输入需要同步的域名列表 (用空格隔开): " domain_input
 
@@ -18,6 +19,7 @@ cat > $INSTALL_DIR/cf_config.json <<EOF
 {
   "CF_API_TOKEN": "$api_token",
   "ZONE_ID": "$zone_id",
+  "RULE_ID": "$rule_id",
   "RULE_NAME": "$rule_name",
   "DOMAIN_NAMES": [$(
     for domain in $domain_input; do
