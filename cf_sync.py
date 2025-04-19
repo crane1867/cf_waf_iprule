@@ -47,6 +47,10 @@ def get_filter_id(config):
 
     try:
         resp = requests.get(api_url, headers=headers)
+        # 在 get_filter_id() 函数增加权限校验
+        if resp.status_code == 403:
+            log(f"❌ 权限不足！请检查 Token 是否具备 Zone:Firewall Services:Edit 权限")
+            return None
         if resp.ok:
             rule_data = resp.json()
             filter_id = rule_data['result']['filter']['id']
