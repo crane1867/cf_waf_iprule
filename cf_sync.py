@@ -11,43 +11,39 @@ import datetime
 CONFIG_FILE = "/root/cf_Rules/cf_config.json"
 LOG_FILE = "/root/cf_Rules/sync.log"
 
-# === 日志 ===
 def log(msg):
     now = datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
     with open(LOG_FILE, 'a') as f:
         f.write(f"{now} {msg}\n")
     print(f"{now} {msg}")
 
-# === 加载配置 ===
 def load_config():
     if not os.path.exists(CONFIG_FILE):
-        log("未找到配置文件，无法运行！")
+        log("❌ 配置文件未找到，无法运行！")
         exit(1)
     with open(CONFIG_FILE) as f:
         return json.load(f)
 
-# === 域名解析 ===
 def resolve_ips(domains):
     ipv4, ipv6 = set(), set()
     for domain in domains:
         try:
             for info in socket.getaddrinfo(domain, None):
                 ip = info[4][0]
-                if ':' in ip:
+                if ':' in ip:  # IPv6
                     try:
                         network = ipaddress.IPv6Network(ip + '/64', strict=False)
                         ipv6.add(str(network))
-                    except:
-                        log(f"IPv6格式错误: {ip}")
+                    except Exception as e:
+                        log(f"IPv6转换失败: {ip} -> {e}")
                 else:
                     ipv4.add(ip)
         except Exception as e:
-            log(f"解析 {domain} 失败：{e}")
+            log(f"解析 {domain} 出错: {e}")
     return list(ipv4 | ipv6)
 
-# === 更新WAF规则 ===
-def update_waf(ips, config):
-    api = f"https://api.cloudflare.com/client/v4/accounts/{config['ACCOUNT_ID']}/rulesets/{config['RULESET_ID']}/rules"
+def update_custom_rule(ips, config):
+    api_url = f"https://api.cloudflare.com/client/v4/zones/{config['ZONE_ID']}/firewall/rules"
 
     headers = {
         "Authorization": f"Bearer {config['CF_API_TOKEN']}",
@@ -55,26 +51,29 @@ def update_waf(ips, config):
     }
 
     rule = {
-        "expression": f"(http.host eq \"{config['RULE_NAME']}\" and not ip.src in {{{', '.join(ips)}}})",
+        "filter": {
+            "expression": f'(http.host eq "{config["RULE_NAME"]}" and not ip.src in {{{", ".join(ips)}}})',
+            "paused": False,
+            "description": "自动同步域名解析IP，拦截其他IP"
+        },
         "action": "block",
-        "description": "自动同步：允许解析IP访问，其余拦截"
+        "description": f"自动同步更新规则（{config['RULE_NAME']}）"
     }
 
     try:
-        resp = requests.put(api, headers=headers, json={"rules": [rule]})
-        if resp.ok:
-            log("✅ Cloudflare WAF规则已更新成功。")
+        response = requests.put(api_url, headers=headers, json=[rule])
+        if response.ok:
+            log("✅ Cloudflare 自定义规则更新成功。")
         else:
-            log(f"❌ 更新失败: {resp.text}")
+            log(f"❌ Cloudflare更新失败: {response.text}")
     except Exception as e:
-        log(f"请求异常: {e}")
+        log(f"⚠️ API请求失败: {e}")
 
-# === 主程序 ===
 def main():
     config = load_config()
     ips = resolve_ips(config['DOMAIN_NAMES'])
-    log(f"本次解析共{len(ips)}个IP：{ips}")
-    update_waf(ips, config)
+    log(f"解析完成：共 {len(ips)} 个IP：{ips}")
+    update_custom_rule(ips, config)
 
 if __name__ == '__main__':
     main()
