@@ -4,7 +4,7 @@ echo "=== Cloudflare WAF 域名同步工具 安装助手 ==="
 echo "💡 本程序将自动安装依赖、配置API信息、设置定时任务和快捷命令。"
 
 # 确保路径正确
-INSTALL_DIR="/root/cf-waf-ip-sync"
+INSTALL_DIR="/root/cf_Rules"
 mkdir -p $INSTALL_DIR
 
 # 提示输入配置信息
