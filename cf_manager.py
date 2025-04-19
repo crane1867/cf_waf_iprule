@@ -90,7 +90,7 @@ def stop_run():
 # === 主菜单 ===
 def menu():
     while True:
-        print(\"\"\" 
+        print(""" 
 Cloudflare WAF自动同步 - 管理脚本
 1) 修改API和配置信息
 2) 添加同步域名
@@ -101,7 +101,7 @@ Cloudflare WAF自动同步 - 管理脚本
 7) 停止同步任务
 8) 卸载全部文件
 9) 退出
-        \"\"\")
+        """)
         choice = input("请输入选项: ").strip()
 
         if choice == '1':
