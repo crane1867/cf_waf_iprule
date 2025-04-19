@@ -31,11 +31,7 @@ def resolve_ips(domains):
             for info in socket.getaddrinfo(domain, None):
                 ip = info[4][0]
                 if ':' in ip:  # IPv6
-                    try:
-                        network = ipaddress.IPv6Network(ip + '/64', strict=False)
-                        ipv6.add(str(network))
-                    except Exception as e:
-                        log(f"IPv6转换失败: {ip} -> {e}")
+                    ipv6.add(ip)    
                 else:
                     ipv4.add(ip)
         except Exception as e:
