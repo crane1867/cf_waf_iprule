@@ -69,7 +69,7 @@ def uninstall():
         os.system("rm -rf /root/cf_Rules")
 
         # 卸载 pip 安装的 requests 库
-        os.system("pip3 uninstall -y requests")
+        os.system("pip3 uninstall -y requests --break-system-packages")
 
         # 卸载系统 apt 安装的 requests 库
         os.system("apt remove --purge -y python3-requests")
