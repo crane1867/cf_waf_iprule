@@ -67,7 +67,8 @@ def uninstall():
         # 删除整个脚本目录
         os.system("rm -rf /root/cf_Rules")
         # 卸载requests库
-        os.system("pip3 uninstall -y requests")
+        os.system("pip3 uninstall requests --break-system-packages
+")
         print("✅ 卸载完成，系统已清理干净。")
     else:
         print("取消卸载。")
