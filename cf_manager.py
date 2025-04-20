@@ -60,14 +60,20 @@ def remove_domain():
         print("域名未找到。")
 
 def uninstall():
-    confirm = input("确认要卸载所有脚本和依赖吗？(yes/no): ").lower()
-    if confirm == 'yes':
+    confirm = input("确认要卸载所有脚本和依赖吗？(y/n): ").lower()
+    if confirm == 'y':
         # 删除crontab同步任务
         os.system("crontab -l | grep -v '/root/cf_Rules/cf_sync.py' | crontab -")
+
         # 删除整个脚本目录
         os.system("rm -rf /root/cf_Rules")
-        # 卸载requests库
-        os.system("pip3 uninstall requests --break-system-packages")
+
+        # 卸载 pip 安装的 requests 库
+        os.system("pip3 uninstall -y requests")
+
+        # 卸载系统 apt 安装的 requests 库
+        os.system("apt remove --purge -y python3-requests")
+
         print("✅ 卸载完成，系统已清理干净。")
     else:
         print("取消卸载。")
