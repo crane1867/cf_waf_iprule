@@ -32,12 +32,12 @@ def resolve_ips(domains):
             for info in socket.getaddrinfo(domain, None):
                 ip = info[4][0]
                 if ':' in ip:
-                    ipv6.add(ip)  # 保留原始 IPv6 地址
+                    ipv6.add(ip)
                 else:
                     ipv4.add(ip)
         except Exception as e:
             log(f"解析 {domain} 出错: {e}")
-    return list(ipv4), list(ipv6)  # 返回分离的列表
+    return list(ipv4), list(ipv6)  # 返回列表
 
 def get_filter_id(config):
     api_url = f"https://api.cloudflare.com/client/v4/zones/{config['ZONE_ID']}/firewall/rules/{config['RULE_ID']}"
@@ -114,7 +114,7 @@ def update_existing_rule(ipv4_list, ipv6_list, config, filter_id):
 
 def main():
     config = load_config()
-    ipv4, ipv6 = resolve_ips(config['DOMAIN_NAMES'])  # 获取分离的列表
+    ipv4, ipv6 = resolve_ips(config['DOMAIN_NAMES'])  # 获取列表
     log(f"解析完成：IPv4 {len(ipv4)} 个，IPv6 {len(ipv6)} 个")
 
     filter_id = get_filter_id(config)
