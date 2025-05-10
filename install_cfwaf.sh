@@ -34,7 +34,7 @@ echo "✅ 配置文件已生成：$INSTALL_DIR/cf_config.json"
 # 安装依赖
 echo "🚀 正在安装 Python3 与 requests 库..."
 apt update && apt install -y python3 python3-pip
-pip3 install requests --break-system-packages
+pip3 install requests
 
 # 下载核心同步脚本 & 管理脚本
 wget -O $INSTALL_DIR/cf_sync.py https://raw.githubusercontent.com/crane1867/cf_waf_iprule/main/cf_sync.py
