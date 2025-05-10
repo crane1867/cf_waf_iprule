@@ -6,7 +6,7 @@ echo "💡 本程序将自动安装依赖、配置API信息、设置定时任务
 # 确保目标路径存在
 INSTALL_DIR="/root/cf_Rules"
 mkdir -p $INSTALL_DIR
-"RULE_ID": ""
+
 # 提示用户输入配置信息
 read -p "请输入 Cloudflare API Token: " api_token
 read -p "请输入 Cloudflare ZONE ID: " zone_id
