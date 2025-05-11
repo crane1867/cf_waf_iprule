@@ -3,6 +3,7 @@
 
 import os
 import json
+import requests # 新增导入
 
 # === 配置文件路径 ===
 CONFIG_FILE = "/root/cf_Rules/cf_config.json"
@@ -12,9 +13,11 @@ def create_default_config():
     return {
         "CF_API_TOKEN": "",
         "ZONE_ID": "",
-        "RULE_ID": "",        
+        "RULE_ID": "",
         "RULE_NAME": "",
-        "DOMAIN_NAMES": []
+        "DOMAIN_NAMES": [],
+        "TELEGRAM_BOT_TOKEN": "", # 新增
+        "TELEGRAM_CHAT_ID": ""    # 新增
     }
 
 def load_config():
@@ -27,15 +30,44 @@ def save_config(config):
     with open(CONFIG_FILE, 'w') as f:
         json.dump(config, f, indent=4)
 
+# === Telegram 测试功能 ===
+def test_telegram_notification():
+    config = load_config()
+    bot_token = config.get("TELEGRAM_BOT_TOKEN")
+    chat_id = config.get("TELEGRAM_CHAT_ID")
+
+    if not bot_token or not chat_id:
+        print("❌ Telegram Bot Token 或 Chat ID 未配置。请先在配置中设置。")
+        return
+
+    message = "🎉 Telegram 通知测试成功！您的 Cloudflare WAF 脚本可以发送通知了。"
+    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+    payload = {
+        'chat_id': chat_id,
+        'text': message,
+        'parse_mode': 'Markdown' # 或者 'HTML'
+    }
+    try:
+        response = requests.post(url, json=payload, timeout=10)
+        if response.status_code == 200:
+            print("✅ 测试消息已成功发送到 Telegram！")
+        else:
+            print(f"❌ 发送 Telegram 测试消息失败: {response.status_code} - {response.text}")
+    except Exception as e:
+        print(f"❌ 发送 Telegram 测试消息时发生错误: {e}")
+
+
 # === 功能 ===
 def edit_config():
     config = load_config()
     print("当前配置:")
     print(json.dumps(config, indent=4))
-    config['CF_API_TOKEN'] = input("请输入新的CF_API_TOKEN: ").strip()
-    config['ZONE_ID'] = input("请输入新的ZONE_ID: ").strip()
-    config['RULE_ID'] = input("请输入新的RULE_ID: ").strip()    
-    config['RULE_NAME'] = input("请输入新的允许访问的域名: ").strip()
+    config['CF_API_TOKEN'] = input(f"请输入新的CF_API_TOKEN (当前: {config.get('CF_API_TOKEN', '')}): ").strip() or config.get('CF_API_TOKEN', '')
+    config['ZONE_ID'] = input(f"请输入新的ZONE_ID (当前: {config.get('ZONE_ID', '')}): ").strip() or config.get('ZONE_ID', '')
+    config['RULE_ID'] = input(f"请输入新的RULE_ID (当前: {config.get('RULE_ID', '')}): ").strip() or config.get('RULE_ID', '')
+    config['RULE_NAME'] = input(f"请输入新的允许访问的域名 (当前: {config.get('RULE_NAME', '')}): ").strip() or config.get('RULE_NAME', '')
+    config['TELEGRAM_BOT_TOKEN'] = input(f"请输入Telegram Bot Token (当前: {config.get('TELEGRAM_BOT_TOKEN', '')}): ").strip() or config.get('TELEGRAM_BOT_TOKEN', '')
+    config['TELEGRAM_CHAT_ID'] = input(f"请输入Telegram Chat ID (当前: {config.get('TELEGRAM_CHAT_ID', '')}): ").strip() or config.get('TELEGRAM_CHAT_ID', '')
     save_config(config)
     print("配置已保存。")
 
@@ -96,7 +128,7 @@ def stop_run():
 # === 主菜单 ===
 def menu():
     while True:
-        print(""" 
+        print("""
 Cloudflare WAF自动同步 - 管理脚本
 1) 修改API和配置信息
 2) 添加同步域名
@@ -105,8 +137,9 @@ Cloudflare WAF自动同步 - 管理脚本
 5) 删除定时任务
 6) 手动执行同步
 7) 停止同步任务
-8) 卸载全部文件
-9) 退出
+8) 测试Telegram通知  # 新增选项
+9) 卸载全部文件
+10) 退出             # 调整退出选项
         """)
         choice = input("请输入选项: ").strip()
 
@@ -124,10 +157,12 @@ Cloudflare WAF自动同步 - 管理脚本
             manual_run()
         elif choice == '7':
             stop_run()
-        elif choice == '8':
+        elif choice == '8': # 新增
+            test_telegram_notification()
+        elif choice == '9':
             uninstall()
             break
-        elif choice == '9':
+        elif choice == '10': # 调整
             break
         else:
             print("无效输入，请重新选择。")
